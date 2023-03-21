@@ -39,11 +39,6 @@ func createEndpoint(c *gin.Context) {
 		return
 	}
 
-	ip := c.Request.Header.Get("X-Forwarded-For")
-	if ip == "" {
-		ip = c.ClientIP()
-	}
-
 	code, err := generate.NewCode()
 	if err != nil {
 		log.Println(err)
@@ -68,7 +63,14 @@ func createEndpoint(c *gin.Context) {
 		Code:      code,
 		Url:       longUrl,
 		Timestamp: time.Now().UTC(),
-		Ip:        ip,
+		Ip: func() (ip string) {
+			ip = c.Request.Header.Get("X-Forwarded-For")
+			if ip == "" {
+				ip = c.ClientIP()
+			}
+
+			return
+		}(),
 	}
 	_, err = statement.Exec(short.Code, short.Url, short.Timestamp, short.Ip)
 	if err != nil {
@@ -122,6 +124,16 @@ func deleteEndpoint(c *gin.Context) {
 }
 
 func rootEndpoint(c *gin.Context) {
+	userAgent := c.Request.Header.Get("User-Agent")
+	if userAgent == "" {
+		c.AbortWithStatus(400)
+		return
+	}
+	ip := c.Request.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = c.ClientIP()
+	}
+
 	code := c.Param("code")
 
 	var longUrl string
@@ -132,6 +144,32 @@ func rootEndpoint(c *gin.Context) {
 			return
 		}
 
+		log.Println(err)
+		c.AbortWithStatus(500)
+		return
+	}
+
+	statement, err := db.DB.Prepare("INSERT INTO visits (code, timestamp, ip, user_agent) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(500)
+		return
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(statement)
+
+	visit := db.Visit{
+		Code:      code,
+		Timestamp: time.Now().UTC(),
+		Ip:        ip,
+		UserAgent: userAgent,
+	}
+	_, err = statement.Exec(visit.Code, visit.Timestamp, visit.Ip, visit.UserAgent)
+	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(500)
 		return

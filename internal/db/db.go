@@ -17,6 +17,13 @@ type Short struct {
 	Ip        string
 }
 
+type Visit struct {
+	Code      string
+	Timestamp time.Time
+	Ip        string
+	UserAgent string
+}
+
 func Connect(path string) (err error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
@@ -27,7 +34,16 @@ func Connect(path string) (err error) {
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS shorts (code TEXT PRIMARY KEY, url TEXT NOT NULL, timestamp TEXT NOT NULL, ip TEXT NOT NULL)`)
 	if err != nil {
-		log.Println(err)
+		func() {
+			err := db.Close()
+			log.Println(err)
+		}()
+
+		return
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS visits (code TEXT PRIMARY KEY, timestamp TEXT NOT NULL, ip TEXT NOT NULL, user_agent TEXT NOT NULL)`)
+	if err != nil {
 		func() {
 			err := db.Close()
 			log.Println(err)
