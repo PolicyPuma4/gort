@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  gort:
+    container_name: "gort"
+    environment:
+      BASE_URL_SCHEME: "http"
+      BASE_URL_HOST: "localhost"
+      BASE_URL_PORT: "3000"
+      TOKEN: "adminadmin"
+    image: "policypuma4/gort:latest"
+    ports:
+      - "3000:3000"
+    restart: "always"
+    volumes:
+      - "./data:/data"
