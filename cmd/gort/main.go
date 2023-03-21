@@ -146,7 +146,15 @@ func main() {
 	baseUrlPort := os.Getenv("BASE_URL_PORT")
 	baseUrl = u.URL{
 		Scheme: baseUrlScheme,
-		Host:   net.JoinHostPort(baseUrlHost, baseUrlPort),
+		Host: func() (host string) {
+			host = baseUrlHost
+			if baseUrlPort == "" {
+				return
+			}
+
+			host = net.JoinHostPort(baseUrlHost, baseUrlPort)
+			return
+		}(),
 	}
 	token = os.Getenv("TOKEN")
 	path := os.Getenv("DATABASE_PATH")
