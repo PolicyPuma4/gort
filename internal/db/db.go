@@ -42,7 +42,7 @@ func Connect(path string) (err error) {
 		return
 	}
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS visits (code TEXT PRIMARY KEY, timestamp TEXT NOT NULL, ip TEXT NOT NULL, user_agent TEXT NOT NULL)`)
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS visits (code TEXT NOT NULL, timestamp TEXT NOT NULL, ip TEXT NOT NULL, user_agent TEXT NOT NULL)`)
 	if err != nil {
 		func() {
 			err := db.Close()
